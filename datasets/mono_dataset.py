@@ -111,6 +111,7 @@ class MonoDataset(data.Dataset):
     def __len__(self):
         return len(self.filenames)
 
+    ## 하나의 index에 대해서 dictionary 제작
     def __getitem__(self, index):
         """Returns a single training item from the dataset as a dictionary.
 
@@ -137,29 +138,34 @@ class MonoDataset(data.Dataset):
         """
         inputs = {}
 
-        do_color_aug = self.is_train and random.random() > 0.5
-        do_flip = self.is_train and random.random() > 0.5
+        # do_color_aug = self.is_train and random.random() > 0.5
+        # do_flip = self.is_train and random.random() > 0.5
 
         ## filenames[0] = "1111111111_1111 00"
         line = self.filenames[index].split()
         folder = line[0]
+        sub_folder_1 = "DoLP_undistorted"
+        sub_folder_2 = "AoLP_undistorted"
 
-        if len(line) == 3:
-            frame_index = int(line[1])
-        else:
-            frame_index = 0
+        frame_index = int(line[1])
+        
+        ## left right 서로 뒤집는 부분!!
+        # if len(line) == 3:
+        #     frame_index = int(line[1])
+        # else:
+        #     frame_index = 0
 
-        if len(line) == 3:
-            side = line[2]
-        else:
-            side = None
+        # if len(line) == 3:
+        #     side = line[2]
+        # else:
+        #     side = None
 
+        ## side = left로 통일 (임시적)
+        side = "l"
+
+        ## frame_idxs = -1 0 1로 입력 받았음
         for i in self.frame_idxs:
-            if i == "s":
-                other_side = {"r": "l", "l": "r"}[side]
-                inputs[("color", i, -1)] = self.get_color(folder, frame_index, other_side, do_flip)
-            else:
-                inputs[("color", i, -1)] = self.get_color(folder, frame_index + i, side, do_flip)
+            inputs[("color", i, -1)] = self.get_color(folder, frame_index + i, side, False)
 
         # adjusting intrinsics to match each scale in the pyramid
         for scale in range(self.num_scales):
@@ -173,30 +179,26 @@ class MonoDataset(data.Dataset):
             inputs[("K", scale)] = torch.from_numpy(K)
             inputs[("inv_K", scale)] = torch.from_numpy(inv_K)
 
-        if do_color_aug:
-            color_aug = transforms.ColorJitter.get_params(
-                self.brightness, self.contrast, self.saturation, self.hue)
-        else:
-            color_aug = (lambda x: x)
-
+        ## 색상 증강 설정 OFF
+        color_aug = (lambda x: x) # 그냥 원본
         self.preprocess(inputs, color_aug)
 
         for i in self.frame_idxs:
             del inputs[("color", i, -1)]
-            del inputs[("color_aug", i, -1)]
+            # del inputs[("color_aug", i, -1)]
 
         if self.load_depth:
-            depth_gt = self.get_depth(folder, frame_index, side, do_flip)
+            depth_gt = self.get_depth(folder, frame_index, side, False)
             inputs["depth_gt"] = np.expand_dims(depth_gt, 0)
             inputs["depth_gt"] = torch.from_numpy(inputs["depth_gt"].astype(np.float32))
 
-        if "s" in self.frame_idxs:
-            stereo_T = np.eye(4, dtype=np.float32)
-            baseline_sign = -1 if do_flip else 1
-            side_sign = -1 if side == "l" else 1
-            stereo_T[0, 3] = side_sign * baseline_sign * 0.1
+        # if "s" in self.frame_idxs:
+        #     stereo_T = np.eye(4, dtype=np.float32)
+        #     baseline_sign = -1 if do_flip else 1
+        #     side_sign = -1 if side == "l" else 1
+        #     stereo_T[0, 3] = side_sign * baseline_sign * 0.1
 
-            inputs["stereo_T"] = torch.from_numpy(stereo_T)
+        #     inputs["stereo_T"] = torch.from_numpy(stereo_T)
 
         return inputs
 

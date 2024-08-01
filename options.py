@@ -78,8 +78,11 @@ class MonodepthOptions:
         self.parser.add_argument("--use_stereo",
                                  help="if set, uses stereo pair for training",
                                  action="store_true")
+        
+        ## frame index 제공
+        ## 기본적으로 현재 시점 0 에 대해 이전 -1 이후 1 시점 3개를 한번에 가져옴
         self.parser.add_argument("--frame_ids",
-                                 nargs="+",
+                                 nargs="+", # 여러 입력을 받을 수 있게 해줌
                                  type=int,
                                  help="frames to load",
                                  default=[0, -1, 1])
