@@ -132,3 +132,13 @@ class KITTIDepthDataset(KITTIDataset):
             depth_gt = np.fliplr(depth_gt)
 
         return depth_gt
+
+class polarDataset(KITTIDataset):
+    """polar dataset for training and testing
+    """
+    def __init__(self, *args, **kwargs):
+        super(polarDataset, self).__init__(*args, **kwargs)
+
+    def get_image_path(self, folder, frame_index, side):
+        ## dont know 
+        return 

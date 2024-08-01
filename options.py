@@ -20,7 +20,8 @@ class MonodepthOptions:
         self.parser.add_argument("--data_path",
                                  type=str,
                                  help="path to the training data",
-                                 default=os.path.join(file_dir, "kitti_data"))
+                                 default=os.path.join("data","UROP","UROP_polardepth",
+                                                      "polarimetric_imaging_dataset",))
         self.parser.add_argument("--log_dir",
                                  type=str,
                                  help="log directory",
@@ -34,8 +35,8 @@ class MonodepthOptions:
         self.parser.add_argument("--split",
                                  type=str,
                                  help="which training split to use",
-                                 choices=["eigen_zhou", "eigen_full", "odom", "benchmark"],
-                                 default="eigen_zhou")
+                                 choices=["eigen_zhou", "eigen_full", "odom", "benchmark", "polar_ref"],
+                                 default="polar_ref" ) ##eigen_zhou
         self.parser.add_argument("--num_layers",
                                  type=int,
                                  help="number of resnet layers",
@@ -44,16 +45,16 @@ class MonodepthOptions:
         self.parser.add_argument("--dataset",
                                  type=str,
                                  help="dataset to train on",
-                                 default="kitti",
-                                 choices=["kitti", "kitti_odom", "kitti_depth", "kitti_test"])
+                                 default="polar", ## *kitti
+                                 choices=["kitti", "kitti_odom", "kitti_depth", "kitti_test", "polar"])
         self.parser.add_argument("--png",
                                  help="if set, trains from raw KITTI png files (instead of jpgs)",
                                  action="store_true")
-        self.parser.add_argument("--height",
+        self.parser.add_argument("--height", ## resize 목표의 height!
                                  type=int,
                                  help="input image height",
                                  default=192)
-        self.parser.add_argument("--width",
+        self.parser.add_argument("--width", ## resize 목표의 width!!
                                  type=int,
                                  help="input image width",
                                  default=640)
