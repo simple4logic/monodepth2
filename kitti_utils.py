@@ -47,52 +47,63 @@ def generate_depth_map(calib_dir, velo_filename, cam=2, vel_depth=False):
     """Generate a depth map from velodyne data
     """
     # load calibration files
-    cam2cam = read_calib_file(os.path.join(calib_dir, 'calib_cam_to_cam.txt'))
-    velo2cam = read_calib_file(os.path.join(calib_dir, 'calib_velo_to_cam.txt'))
-    velo2cam = np.hstack((velo2cam['R'].reshape(3, 3), velo2cam['T'][..., np.newaxis]))
-    velo2cam = np.vstack((velo2cam, np.array([0, 0, 0, 1.0])))
+    # calib_dir = monodepth2/polarimetric_imaging_dataset/calibration/
+    lidar2cam_path = os.path.join(calib_dir,'lidar_to_camera_transform.txt')
+    camera_intrinsics_path = os.path.join(calib_dir,'camera_intrinsics.txt')
+    lidar2cam = np.loadtxt(lidar2cam_path, delimiter=' ') ## 우리가 로드하는 데이터는 이미 3 * 4
+    camera_intrinsics = np.loadtxt(camera_intrinsics_path, delimiter=' ')
+
+    # load velodyne data (ground truth)
+    ## velo_filename 
+    gt_npy = np.load(velo_filename)
+    xyz = gt_npy["xyz"] # intensity = gt_npy["intensity"]
+
+    lidar_points_3d_homogeneous = np.hstack((xyz, np.ones((np.shape(xyz)[0], 1)))) ## n * 3 -> n * 4로 확장
+    camera_points_3d = lidar2cam @ lidar_points_3d_homogeneous.T ## (3 X 4) * (4 X n) => 3 X n
+    camera_points_3d_in_front = camera_points_3d[:, camera_points_3d[2, :] > 0] ## 이미지 뒷부분 제거
+    image_points_2d = camera_intrinsics @ camera_points_3d_in_front ## => (3 X 3) * (3 X n) => 3 X n
+
+    ## 동차 좌표계 => 2D 좌표계로 변환 (u, v, w) 꼴 -> (u/w, v/w) 꼴로 변환
+    image_points_2d = image_points_2d[:2, :] / image_points_2d[2, :] ## 2 X n 
+    image_points_2d = np.round(image_points_2d).astype(int) - 1 ## 반올림 이후 int형으로 변환 후 -1(원본 코드)
 
     # get image shape
-    im_shape = cam2cam["S_rect_02"][::-1].astype(np.int32)
+    im_shape = [1023, 1223] # 그냥 이미지 사이즈(1223 * 1023) 고정으로 넣음 (가능하면 read 한 이후 shape 가져오는게 좋음)
 
-    # compute projection matrix velodyne->image plane
-    R_cam2rect = np.eye(4)
-    R_cam2rect[:3, :3] = cam2cam['R_rect_00'].reshape(3, 3)
-    P_rect = cam2cam['P_rect_0'+str(cam)].reshape(3, 4)
-    P_velo2im = np.dot(np.dot(P_rect, R_cam2rect), velo2cam)
+    ## check if in bounds
+    ## 2d plane에 투영시킨 이후, 원본 이미지 범위만 가져오도록 mask 준비
+    mask_x = np.logical_and(image_points_2d[0, :] >= 0, image_points_2d[0, :] < im_shape[1])
+    mask_y = np.logical_and(image_points_2d[1, :] >= 0, image_points_2d[1, :] < im_shape[0])
+    mask = np.logical_and(mask_x, mask_y)
 
-    # load velodyne points and remove all behind image plane (approximation)
-    # each row of the velodyne data is forward, left, up, reflectance
-    velo = load_velodyne_points(velo_filename)
-    velo = velo[velo[:, 0] >= 0, :]
+    ## mask 적용
+    image_points_2d_in_frame = image_points_2d[:, mask] # 2 X n(with mask)
+    depth_value = camera_points_3d_in_front[2, mask] # 1 X n(with mask)   # temp[mask]
 
-    # project the points to the camera
-    velo_pts_im = np.dot(P_velo2im, velo.T).T
-    velo_pts_im[:, :2] = velo_pts_im[:, :2] / velo_pts_im[:, 2][..., np.newaxis]
+    ## transpose -> 원래 코드에 맞게 전부 transpose
+    image_points_2d_in_frame = image_points_2d_in_frame.T # n X 2
+    depth_value = depth_value.T # n X 1
 
-    if vel_depth:
-        velo_pts_im[:, 2] = velo[:, 0]
+    ## min, max clipping
+    min_distance = 3
+    max_distance = 40
+    depth_value = np.clip(depth_value, min_distance, max_distance) # min, max clipping
 
-    # check if in bounds
-    # use minus 1 to get the exact same value as KITTI matlab code
-    velo_pts_im[:, 0] = np.round(velo_pts_im[:, 0]) - 1
-    velo_pts_im[:, 1] = np.round(velo_pts_im[:, 1]) - 1
-    val_inds = (velo_pts_im[:, 0] >= 0) & (velo_pts_im[:, 1] >= 0)
-    val_inds = val_inds & (velo_pts_im[:, 0] < im_shape[1]) & (velo_pts_im[:, 1] < im_shape[0])
-    velo_pts_im = velo_pts_im[val_inds, :]
+    ## 여기서는 normalize 안했는데 이걸 해야할지 말아야할지 보류!! Q
+    # depth_value = (depth_value - min_distance) / (max_distance - min_distance) # do normalize
 
     # project to image
     depth = np.zeros((im_shape[:2]))
-    depth[velo_pts_im[:, 1].astype(np.int), velo_pts_im[:, 0].astype(np.int)] = velo_pts_im[:, 2]
+    depth[image_points_2d_in_frame[:, 1], image_points_2d_in_frame[:, 0]] = depth_value ## 2 X n(with mask)
 
     # find the duplicate points and choose the closest depth
-    inds = sub2ind(depth.shape, velo_pts_im[:, 1], velo_pts_im[:, 0])
+    inds = sub2ind(depth.shape, image_points_2d_in_frame[:, 1], image_points_2d_in_frame[:, 0])
     dupe_inds = [item for item, count in Counter(inds).items() if count > 1]
     for dd in dupe_inds:
         pts = np.where(inds == dd)[0]
-        x_loc = int(velo_pts_im[pts[0], 0])
-        y_loc = int(velo_pts_im[pts[0], 1])
-        depth[y_loc, x_loc] = velo_pts_im[pts, 2].min()
+        x_loc = int(image_points_2d_in_frame[pts[0], 0])
+        y_loc = int(image_points_2d_in_frame[pts[0], 1])
+        depth[y_loc, x_loc] = image_points_2d_in_frame[pts, 2].min()
     depth[depth < 0] = 0
 
     return depth
