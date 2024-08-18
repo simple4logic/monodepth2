@@ -43,7 +43,7 @@ def export_gt_depths_kitti():
         frame_id = int(frame_id)
 
         if opt.split == "eigen":
-            calib_dir = os.path.join(opt.data_path, folder.split("/")[0])
+            calib_dir = os.path.join(opt.data_path, "calibration")
             velo_filename = os.path.join(opt.data_path, folder,
                                          "velodyne_points/data", "{:010d}.bin".format(frame_id))
             ## lidar에서 값을 읽어와서, 이미지 사이즈만큼 생긴 0위에다가 값을 넣어온다. 이미지 크기의 depth map 로딩
