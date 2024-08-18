@@ -143,11 +143,8 @@ class MonoDataset(data.Dataset):
 
         ## filenames[0] = "1111111111_1111 00"
         line = self.filenames[index].split()
-        folder = line[0]
-        sub_folder_1 = "DoLP_undistorted"
-        sub_folder_2 = "AoLP_undistorted"
-
-        frame_index = int(line[1])
+        folder = line[0] ## 날짜
+        frame_index = int(line[1]) ## 이미지 번호
         
         ## left right 서로 뒤집는 부분!!
         # if len(line) == 3:
@@ -160,12 +157,12 @@ class MonoDataset(data.Dataset):
         # else:
         #     side = None
 
-        ## side = left로 통일 (임시적)
-        side = "l"
+        ## side 변수 삭제
+        # side = "l"
 
         ## frame_idxs = -1 0 1로 입력 받았음
         for i in self.frame_idxs:
-            inputs[("color", i, -1)] = self.get_color(folder, frame_index + i, side, False)
+            inputs[("color", i, -1)] = self.get_color(folder, frame_index + i)
 
         # adjusting intrinsics to match each scale in the pyramid
         for scale in range(self.num_scales):
@@ -187,8 +184,10 @@ class MonoDataset(data.Dataset):
             del inputs[("color", i, -1)]
             # del inputs[("color_aug", i, -1)]
 
+        ## 이 부분에서, kitti_dataeset에서 정의된 get_depth를 이용해 gt를 넣어준다
+        ## kitti_dataset에서 가져올 수 있도록 미리 npz를 bin 파일로 변환해둘 것
         if self.load_depth:
-            depth_gt = self.get_depth(folder, frame_index, side, False)
+            depth_gt = self.get_depth(folder, frame_index)
             inputs["depth_gt"] = np.expand_dims(depth_gt, 0)
             inputs["depth_gt"] = torch.from_numpy(inputs["depth_gt"].astype(np.float32))
 

@@ -31,7 +31,8 @@ class KITTIDataset(MonoDataset):
                            [0, 0, 1, 0],
                            [0, 0, 0, 1]], dtype=np.float32)
 
-        self.full_res_shape = (1242, 375)
+        # self.full_res_shape = (1242, 375)
+        self.full_res_shape = (1223, 1023)
         self.side_map = {"2": 2, "3": 3, "l": 2, "r": 3}
 
     def check_depth(self):
@@ -46,11 +47,12 @@ class KITTIDataset(MonoDataset):
 
         return os.path.isfile(velo_filename)
 
-    def get_color(self, folder, frame_index, side, do_flip):
-        color = self.loader(self.get_image_path(folder, frame_index, side))
+    def get_color(self, folder, frame_index):
+        color = self.loader(self.get_image_path(folder, frame_index))
 
-        if do_flip:
-            color = color.transpose(pil.FLIP_LEFT_RIGHT)
+        ## do not flip
+        # if do_flip:
+        #     color = color.transpose(pil.FLIP_LEFT_RIGHT)
 
         return color
 
@@ -68,8 +70,10 @@ class KITTIRAWDataset(KITTIDataset):
         return image_path
 
     def get_depth(self, folder, frame_index, side, do_flip):
-        calib_path = os.path.join(self.data_path, folder.split("/")[0])
+        calib_path = self.data_path
 
+        ## 특정 idx image의 depth ground truth인 lidar point cloud를 로드
+        ## 이는 bin 형식으로 정렬되어있음
         velo_filename = os.path.join(
             self.data_path,
             folder,
@@ -116,6 +120,7 @@ class KITTIDepthDataset(KITTIDataset):
             f_str)
         return image_path
 
+    ## depth image 말하는 것 같음
     def get_depth(self, folder, frame_index, side, do_flip):
         f_str = "{:010d}.png".format(frame_index)
         depth_path = os.path.join(
@@ -134,11 +139,37 @@ class KITTIDepthDataset(KITTIDataset):
         return depth_gt
 
 class polarDataset(KITTIDataset):
-    """polar dataset for training and testing
+    """polar dataset load original depth maps(npz format) for ground truth
     """
     def __init__(self, *args, **kwargs):
         super(polarDataset, self).__init__(*args, **kwargs)
 
-    def get_image_path(self, folder, frame_index, side):
-        ## dont know 
-        return 
+    def get_image_path(self, folder, frame_index):
+        f_str = "{:07d}{}".format(frame_index, self.img_ext)
+        image_path = os.path.join(
+            self.data_path, "p_channel", folder, f_str)
+        return image_path
+
+    def get_depth(self, folder, frame_index):
+        ## data_path = os.path.join("data","UROP","UROP_polardepth","polarimetric_imaging_dataset",)
+        calib_path = os.path.join(self.data_path, "calibration")
+
+        ## 특정 idx image의 depth ground truth인 lidar point cloud를 로드
+        ## 이는 bin 형식으로 정렬되어있음
+        velo_filename = os.path.join(
+            self.data_path,
+            folder,
+            "XYZ",
+            "{:07d}.npz".format(int(frame_index)))
+
+        depth_gt = generate_depth_map(calib_path, velo_filename)
+
+        ## depthmap data를 resize함
+        depth_gt = skimage.transform.resize(
+            depth_gt, self.full_res_shape[::-1], order=0, preserve_range=True, mode='constant')
+
+        ## do not flip
+        # if do_flip:
+        #     depth_gt = np.fliplr(depth_gt)
+
+        return depth_gt
