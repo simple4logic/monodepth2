@@ -42,10 +42,12 @@ def export_gt_depths_kitti():
         folder, frame_id, _ = line.split()
         frame_id = int(frame_id)
 
+        ## TODO -> 현재 이 두 split도 아닌 polar_Ref split인데 이러면 필요 없는건가?
         if opt.split == "eigen":
             calib_dir = os.path.join(opt.data_path, "calibration")
             velo_filename = os.path.join(opt.data_path, folder,
                                          "velodyne_points/data", "{:010d}.bin".format(frame_id))
+            
             ## lidar에서 값을 읽어와서, 이미지 사이즈만큼 생긴 0위에다가 값을 넣어온다. 이미지 크기의 depth map 로딩
             gt_depth = generate_depth_map(calib_dir, velo_filename, 2, True)
         elif opt.split == "eigen_benchmark":
@@ -55,12 +57,12 @@ def export_gt_depths_kitti():
 
         gt_depths.append(gt_depth.astype(np.float32))
 
-    output_path = os.path.join(split_folder, "gt_depths.npz")
+    output_path = os.path.join(split_folder, "gt_depths.npz") ## 결국에는 npz로 저장하기 위한 코드로 보인다 일단 필요 없을 듯
 
     print("Saving to {}".format(opt.split))
 
     np.savez_compressed(output_path, data=np.array(gt_depths))
 
-
+## 즉 이 파일을 train.py와는 별개로 "따로" 실행해서 gt를 npz 형태로 추출하는 python code이다
 if __name__ == "__main__":
     export_gt_depths_kitti()

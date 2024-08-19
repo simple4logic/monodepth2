@@ -224,7 +224,7 @@ def evaluate(opt):
     print(("&{: 8.3f}  " * 7).format(*mean_errors.tolist()) + "\\\\")
     print("\n-> Done!")
 
-
+## 즉 이 파일을 train.py와는 별개로 "따로" 실행해서 gt를 npz 형태로 추출하는 python code이다
 if __name__ == "__main__":
     options = MonodepthOptions()
     evaluate(options.parse())

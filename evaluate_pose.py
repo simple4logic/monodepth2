@@ -128,7 +128,7 @@ def evaluate(opt):
     np.save(save_path, pred_poses)
     print("-> Predictions saved to", save_path)
 
-
+## 즉 이 파일을 train.py와는 별개로 "따로" 실행해서 gt를 npz 형태로 추출하는 python code이다
 if __name__ == "__main__":
     options = MonodepthOptions()
     evaluate(options.parse())
