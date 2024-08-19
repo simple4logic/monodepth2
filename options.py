@@ -16,16 +16,15 @@ class MonodepthOptions:
     def __init__(self):
         self.parser = argparse.ArgumentParser(description="Monodepthv2 options")
 
-        # PATHS
+        # PATHS /home/rvl-urop/UROP/UROP_polardepth/polarimetric_imaging_dataset
         self.parser.add_argument("--data_path",
                                  type=str,
                                  help="path to the training data",
-                                 default=os.path.join("data","UROP","UROP_polardepth",
-                                                      "polarimetric_imaging_dataset",))
+                                 default=os.path.join(file_dir, "polarimetric_imaging_dataset",))
         self.parser.add_argument("--log_dir",
                                  type=str,
                                  help="log directory",
-                                 default=os.path.join(os.path.expanduser("~"), "tmp"))
+                                 default=os.path.join(file_dir, "log"))
 
         # TRAINING options
         self.parser.add_argument("--model_name",
