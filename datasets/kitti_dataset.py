@@ -36,14 +36,16 @@ class KITTIDataset(MonoDataset):
         self.side_map = {"2": 2, "3": 3, "l": 2, "r": 3}
 
     def check_depth(self):
-        line = self.filenames[0].split()
-        scene_name = line[0]
-        frame_index = int(line[1])
+        ## filenames[0] = "1111111111_1111 00"
+        line = self.filenames[0].split() ## 정황상 첫번째 양식만 가져와서 gt가 존재하는지 확인하는 것 같음
+        folder = line[0] ## 날짜
+        frame_index = int(line[1]) ## 이미지 번호
 
         velo_filename = os.path.join(
             self.data_path,
-            scene_name,
-            "velodyne_points/data/{:010d}.bin".format(int(frame_index)))
+            folder, ## 날짜 이름 폴더
+            "XYZ",
+            "{:07d}.npz".format(int(frame_index)))
 
         return os.path.isfile(velo_filename)
 
