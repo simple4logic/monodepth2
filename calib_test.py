@@ -45,13 +45,14 @@ def generate_depth_map(calib_dir, velo_filename, cam=2, vel_depth=False):
     mask_y = np.logical_and(image_points_2d[1, :] >= 0, image_points_2d[1, :] < im_shape[0])
     mask = np.logical_and(mask_x, mask_y)
     image_points_2d_in_frame = image_points_2d[:, mask]
-    depth_value = camera_points_3d_in_front[2, mask] # temp[mask] 
+    depth_value = camera_points_3d_in_front[2, mask] # z값인 셈. 
+    # depth_value가 클수록 카메라로부터 멀리 떨어져 있다는 거니까 이거로 나눈다면 x, y값이 더 작아진다.
 
     min_distance = 3
     max_distance = 40
     depth_value = np.clip(depth_value, min_distance, max_distance) # min, max clipping
 
-    depth_map = np.full((im_shape[0], im_shape[1], 3), 0) ## 투영시킬 틀
+    depth_map = np.full((im_shape[0], im_shape[1], 3), 255) ## 투영시킬 틀
     depth_value = (depth_value - min_distance) / (max_distance - min_distance) # do normalize
     depth_color = plt.cm.jet(depth_value)[:,:-1] ## depth value를 color 에 대응시킴
 
