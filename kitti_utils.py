@@ -77,7 +77,7 @@ def generate_depth_map(calib_dir, velo_filename, cam=2, vel_depth=False):
     mask = np.logical_and(mask_x, mask_y)
 
     ## mask 적용
-    image_points_2d_in_frame = image_points_2d[:, mask] # 2 X n(with mask)
+    image_points_2d_in_frame = image_points_2d[:, mask] # 2 X n(with mask), set of (u/w, v/w)
     depth_value = camera_points_3d_in_front[2, mask] # 1 X n(with mask)   # temp[mask]
 
     ## transpose -> 원래 코드에 맞게 전부 transpose
@@ -94,16 +94,17 @@ def generate_depth_map(calib_dir, velo_filename, cam=2, vel_depth=False):
 
     # project to image
     depth = np.zeros((im_shape[:2]))
-    depth[image_points_2d_in_frame[:, 1], image_points_2d_in_frame[:, 0]] = depth_value ## 2 X n(with mask)
+    depth[image_points_2d_in_frame[:, 1], image_points_2d_in_frame[:, 0]] = depth_value
 
     # find the duplicate points and choose the closest depth
     inds = sub2ind(depth.shape, image_points_2d_in_frame[:, 1], image_points_2d_in_frame[:, 0])
     dupe_inds = [item for item, count in Counter(inds).items() if count > 1]
+
     for dd in dupe_inds:
         pts = np.where(inds == dd)[0]
         x_loc = int(image_points_2d_in_frame[pts[0], 0])
         y_loc = int(image_points_2d_in_frame[pts[0], 1])
-        depth[y_loc, x_loc] = image_points_2d_in_frame[pts, 2].min()
+        depth[y_loc, x_loc] = depth_value[pts].min()
     depth[depth < 0] = 0
 
     return depth
