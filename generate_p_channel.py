@@ -11,6 +11,10 @@ def readlines(filename):
         lines = f.read().splitlines()
     return lines
 
+def makedirs(path):
+    if not os.path.exists(path):
+        os.makedirs(path)
+
 ## float(-1, 1) -> int(0, 255) 로 mapping (이미지 저장용)
 def numpy_mapping(arr):
     return ((arr + 1) * 255 / 2).astype(np.uint8)
@@ -41,19 +45,23 @@ def make_Pchannel(self, single_filename, data_path):
     # cv2.waitKey(0)
     # cv2.imwrite((r"./test.jpg"), p_image)
     # print(os.path.join(data_path, "p_channel", date, frame_index + ".jpg"))
+
+    makedirs(os.path.join(data_path, "p_channel", date))
     cv2.imwrite(os.path.join(data_path, "p_channel", date, frame_index + ".jpg"), p_image)
 
 
 file_dir = os.path.dirname(__file__) ## 이 python 파일이 놓여있는 directory 위
-dataset_path = os.path.join(file_dir, "polarimetric_imaging_dataset")
-fpath = os.path.join(dataset_path, "data_splits", "monodepth", "{}.txt")
+# dataset_path = os.path.join(file_dir, "polarimetric_imaging_dataset") ## linux
+dataset_path = os.path.join("C:\\Users\\okht1\\Downloads", "polarimetric_imaging_dataset") ## this window os
 
-train_filenames = readlines(fpath.format("training")) #["20220621_142942 1365"]
-total_length = len(train_filenames)
+fpath = os.path.join(dataset_path, "data_splits", "monodepth", "{}_files.txt")
+usage = ["train", "test", "val"]
+# print(dataset_path)
 
-print(dataset_path)
-
-for i in range(total_length):
-    # print("target file name : ", train_filenames[i])
-    make_Pchannel(i, train_filenames[i], dataset_path)
-    print(i, "-th pre-processing done!")
+for name in usage:
+    filenames = readlines(fpath.format(name)) #["20220621_142942 1365"]
+    total_length = len(filenames)
+    for i in range(total_length):
+        # print("target file name : ", train_filenames[i])
+        make_Pchannel(i, filenames[i], dataset_path)
+        print(i, "-th pre-processing done!", " working on ", name, " currently.")
