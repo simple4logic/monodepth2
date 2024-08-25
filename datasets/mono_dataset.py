@@ -20,9 +20,15 @@ from torchvision import transforms
 def pil_loader(path):
     # open path as file to avoid ResourceWarning
     # (https://github.com/python-pillow/Pillow/issues/835)
-    with open(path, 'rb') as f:
-        with Image.open(f) as img:
-            return img.convert('RGB')
+    try:
+        with open(path, 'rb') as f:
+            with Image.open(f) as img:
+                return img.convert('RGB')
+    except (IOError, FileNotFoundError) as e:
+        # IOError: 이미지 파일이 열리지 않는 경우
+        # FileNotFoundError: 파일이 존재하지 않는 경우
+        # print("Error occured : ",e)
+        return None
 
 
 class MonoDataset(data.Dataset):
@@ -160,6 +166,14 @@ class MonoDataset(data.Dataset):
         ## side 변수 삭제
         # side = "l"
 
+        ## 연속된 구간인지 검사하고, 없을 경우 이 index는 학습 데이터로부터 제외시킴
+        for i in self.frame_idxs:
+            temp_test = self.get_color(folder, frame_index + i)
+            if(temp_test == None):
+                ## 한 번이라도 None이 확인되면, 그냥 None를 리턴해버려서 i 번째 데이터를 학습에 쓰지 않는다
+                ## 이걸 로드하는 부분에서 None이면 그 데이터를 쓰지 않게 해야함
+                return None
+
         ## frame_idxs = -1 0 1로 입력 받았음
         for i in self.frame_idxs:
             inputs[("color", i, -1)] = self.get_color(folder, frame_index + i)
@@ -171,18 +185,21 @@ class MonoDataset(data.Dataset):
             K[0, :] *= self.width // (2 ** scale)
             K[1, :] *= self.height // (2 ** scale)
 
+            ## 역행렬 계산 => inversion of K
             inv_K = np.linalg.pinv(K)
 
-            inputs[("K", scale)] = torch.from_numpy(K)
-            inputs[("inv_K", scale)] = torch.from_numpy(inv_K)
+            inputs[("K", scale)] = torch.from_numpy(K) ## shape = 4*4
+            inputs[("inv_K", scale)] = torch.from_numpy(inv_K) ## shape = 4*4
 
         ## 색상 증강 설정 OFF
         color_aug = (lambda x: x) # 그냥 원본
         self.preprocess(inputs, color_aug)
 
         for i in self.frame_idxs:
-            del inputs[("color", i, -1)]
-            # del inputs[("color_aug", i, -1)]
+            del inputs[("color", i, -1)] # 원래 코드
+            # inputs.pop(("color", i, -1), None) ## pop으로 에러 커버
+            del inputs[("color_aug", i, -1)] # 원래 코드
+            # inputs.pop(("color_aug", i, -1), None) ## pop으로 에러 커버
 
         ## 이 부분에서, kitti_dataeset에서 정의된 get_depth를 이용해 gt를 넣어준다
         ## kitti_dataset에서 가져올 수 있도록 미리 npz를 bin 파일로 변환해둘 것
