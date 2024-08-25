@@ -25,6 +25,20 @@ import datasets
 import networks
 from IPython import embed
 
+## None으로 리턴된 "inputs" 변수를 제외시키기 위한 함수
+def custom_collate_fn(batch, dataset, batch_size=12):
+    # None 값을 제외한 나머지 데이터를 필터링
+    batch = [item for item in batch if item is not None]
+    
+    # 부족한 데이터를 채우기
+    while len(batch) < batch_size:
+        # 데이터셋에서 추가 아이템 선택 (랜덤 또는 순차적)
+        additional_item = dataset[len(batch) % len(dataset)]
+        if additional_item is not None:
+            batch.append(additional_item)
+    
+    return torch.utils.data.dataloader.default_collate(batch)
+
 
 class Trainer:
     def __init__(self, options):
@@ -130,13 +144,15 @@ class Trainer:
             self.opt.frame_ids, 4, is_train=True, img_ext=img_ext)
         self.train_loader = DataLoader(
             train_dataset, self.opt.batch_size, True,
-            num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+            num_workers=self.opt.num_workers, pin_memory=True, drop_last=True,
+            collate_fn=lambda x: custom_collate_fn(x, train_dataset, self.opt.batch_size))
         val_dataset = self.dataset(
             self.opt.data_path, val_filenames, self.opt.height, self.opt.width,
             self.opt.frame_ids, 4, is_train=False, img_ext=img_ext)
         self.val_loader = DataLoader(
             val_dataset, self.opt.batch_size, True,
-            num_workers=self.opt.num_workers, pin_memory=True, drop_last=True)
+            num_workers=self.opt.num_workers, pin_memory=True, drop_last=True,
+            collate_fn=lambda x: custom_collate_fn(x, val_dataset, self.opt.batch_size))
         self.val_iter = iter(self.val_loader)
 
         self.writers = {}
@@ -229,6 +245,7 @@ class Trainer:
     def process_batch(self, inputs):
         """Pass a minibatch through the network and generate images and losses
         """
+
         for key, ipt in inputs.items():
             inputs[key] = ipt.to(self.device)
 
@@ -322,11 +339,12 @@ class Trainer:
         """Validate the model on a single minibatch
         """
         self.set_eval()
+
         try:
-            inputs = self.val_iter.next()
+            inputs = next(self.val_iter)
         except StopIteration:
             self.val_iter = iter(self.val_loader)
-            inputs = self.val_iter.next()
+            inputs = next(self.val_iter)
 
         with torch.no_grad():
             outputs, losses = self.process_batch(inputs)
@@ -343,6 +361,7 @@ class Trainer:
         """Generate the warped (reprojected) color images for a minibatch.
         Generated images are saved into the `outputs` dictionary.
         """
+
         for scale in self.opt.scales:
             disp = outputs[("disp", scale)]
             if self.opt.v1_multiscale:
@@ -375,6 +394,8 @@ class Trainer:
                     T = transformation_from_parameters(
                         axisangle[:, 0], translation[:, 0] * mean_inv_depth[:, 0], frame_id < 0)
 
+                ## 여기서 준 input (depth ~ ) 들은 고스란히 layers의 backprokectDepth class의 forward함수의 인자로 들어감
+                ## 여기서 inputs[("inv_K", source_scale)] = 12 * 4 * 4
                 cam_points = self.backproject_depth[source_scale](
                     depth, inputs[("inv_K", source_scale)])
                 pix_coords = self.project_3d[source_scale](
@@ -504,7 +525,7 @@ class Trainer:
         """
         depth_pred = outputs[("depth", 0, 0)]
         depth_pred = torch.clamp(F.interpolate(
-            depth_pred, [375, 1242], mode="bilinear", align_corners=False), 1e-3, 80)
+            depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80)
         depth_pred = depth_pred.detach()
 
         depth_gt = inputs["depth_gt"]
@@ -512,6 +533,7 @@ class Trainer:
 
         # garg/eigen crop
         crop_mask = torch.zeros_like(mask)
+        ## TODO -> 현재 kitti 형태의 crop 부분인듯?
         crop_mask[:, :, 153:371, 44:1197] = 1
         mask = mask * crop_mask
 
