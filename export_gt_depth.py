@@ -35,7 +35,7 @@ def export_gt_depths_kitti():
                         type=str,
                         help='which split to export gt from',
                         required=True,
-                        choices=["eigen", "eigen_benchmark"])
+                        choices=["eigen", "eigen_benchmark", "polar_ref"])
     opt = parser.parse_args()
 
     split_folder = os.path.join(os.path.dirname(__file__), "splits", opt.split)
@@ -44,10 +44,11 @@ def export_gt_depths_kitti():
     print("Exporting ground truth depths for {}".format(opt.split))
 
     gt_depths = []
+    i = 0
     for line in lines:
-
+        i +=1
         ## 20192_12321 0000000.jpg
-        folder, frame_id, _ = line.split() ## folder == 날짜 / frame_id == 이미지 번호
+        folder, frame_id = line.split() ## folder == 날짜 / frame_id == 이미지 번호
         frame_id = int(frame_id)
 
         ## TODO -> 현재 이 두 split도 아닌 polar_Ref split인데 이러면 필요 없는건가?
@@ -73,6 +74,7 @@ def export_gt_depths_kitti():
             gt_depth = generate_depth_map(calib_dir, velo_filename, 2, True)
 
         gt_depths.append(gt_depth.astype(np.float32))
+        print(i,"-th gt done.")
 
     ## 모든 testfile에 대한 depth-gt가 합쳐진 npz 파일
     output_path = os.path.join(split_folder, "gt_depths.npz")
