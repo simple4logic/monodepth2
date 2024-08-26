@@ -16,6 +16,13 @@ from utils import readlines
 from kitti_utils import generate_depth_map
 
 
+'''
+원래는 쓸 kitti-dataset의 .bin 파일들을 모두 모아서,
+.npz 형태로 저장해주는 파일.
+이렇게 gt를 뽑는 이유는 gt를 뽑아서 trained 모델에 대해 test할 때 쓰기 위해서이다.
+
+polar에서는 각각에 대한 npz 파일을 썼지만, 여기서는 그 npz들을 모아 하나의 총괄적인 큰 npz 하나를 조립한 것으로 보인다
+'''
 def export_gt_depths_kitti():
 
     parser = argparse.ArgumentParser(description='export_gt_depth')
@@ -39,7 +46,8 @@ def export_gt_depths_kitti():
     gt_depths = []
     for line in lines:
 
-        folder, frame_id, _ = line.split()
+        ## 20192_12321 0000000.jpg
+        folder, frame_id, _ = line.split() ## folder == 날짜 / frame_id == 이미지 번호
         frame_id = int(frame_id)
 
         ## TODO -> 현재 이 두 split도 아닌 polar_Ref split인데 이러면 필요 없는건가?
@@ -50,14 +58,24 @@ def export_gt_depths_kitti():
             
             ## lidar에서 값을 읽어와서, 이미지 사이즈만큼 생긴 0위에다가 값을 넣어온다. 이미지 크기의 depth map 로딩
             gt_depth = generate_depth_map(calib_dir, velo_filename, 2, True)
+
         elif opt.split == "eigen_benchmark":
             gt_depth_path = os.path.join(opt.data_path, folder, "proj_depth",
                                          "groundtruth", "image_02", "{:010d}.png".format(frame_id))
             gt_depth = np.array(pil.open(gt_depth_path)).astype(np.float32) / 256
 
+        elif opt.split == "polar_ref":
+            calib_dir = os.path.join(opt.data_path, "calibration")
+
+            velo_filename = os.path.join(
+                opt.data_path, folder, "XYZ", "{:07d}.npz".format(int(frame_id)))
+
+            gt_depth = generate_depth_map(calib_dir, velo_filename, 2, True)
+
         gt_depths.append(gt_depth.astype(np.float32))
 
-    output_path = os.path.join(split_folder, "gt_depths.npz") ## 결국에는 npz로 저장하기 위한 코드로 보인다 일단 필요 없을 듯
+    ## 모든 testfile에 대한 depth-gt가 합쳐진 npz 파일
+    output_path = os.path.join(split_folder, "gt_depths.npz")
 
     print("Saving to {}".format(opt.split))
 
