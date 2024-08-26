@@ -13,6 +13,8 @@ from options import MonodepthOptions
 import datasets
 import networks
 
+from kitti_utils import custom_collate_fn
+
 cv2.setNumThreads(0)  # This speeds up evaluation 5x on our unix systems (OpenCV 3.3.1)
 
 
@@ -86,8 +88,10 @@ def evaluate(opt):
         dataset = datasets.polarDataset(opt.data_path, filenames,
                                            encoder_dict['height'], encoder_dict['width'],
                                            [0], 4, is_train=False)
+        ## 16 == batch size
         dataloader = DataLoader(dataset, 16, shuffle=False, num_workers=opt.num_workers,
-                                pin_memory=True, drop_last=False)
+                                pin_memory=True, drop_last=False, 
+                                collate_fn=lambda x: custom_collate_fn(x, dataset, 16))
 
         encoder = networks.ResnetEncoder(opt.num_layers, False)
         depth_decoder = networks.DepthDecoder(encoder.num_ch_enc)

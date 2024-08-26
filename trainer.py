@@ -25,20 +25,6 @@ import datasets
 import networks
 from IPython import embed
 
-## None으로 리턴된 "inputs" 변수를 제외시키기 위한 함수
-def custom_collate_fn(batch, dataset, batch_size=12):
-    # None 값을 제외한 나머지 데이터를 필터링
-    batch = [item for item in batch if item is not None]
-    
-    # 부족한 데이터를 채우기
-    while len(batch) < batch_size:
-        # 데이터셋에서 추가 아이템 선택 (랜덤 또는 순차적)
-        additional_item = dataset[len(batch) % len(dataset)]
-        if additional_item is not None:
-            batch.append(additional_item)
-    
-    return torch.utils.data.dataloader.default_collate(batch)
-
 
 class Trainer:
     def __init__(self, options):
