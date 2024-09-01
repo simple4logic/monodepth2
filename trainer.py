@@ -8,6 +8,7 @@ from __future__ import absolute_import, division, print_function
 
 import numpy as np
 import time
+import wandb
 
 import torch
 import torch.nn.functional as F
@@ -25,6 +26,8 @@ import datasets
 import networks
 from IPython import embed
 
+## before run this script, run "wandb init" in terminal and create project named "polardepth"
+wandb.init(project = "polardepth")
 
 class Trainer:
     def __init__(self, options):
@@ -207,6 +210,10 @@ class Trainer:
 
             outputs, losses = self.process_batch(inputs)
 
+            ## 둘이 범위가 맞는지를 한 번 확인
+            print("inputs : ", inputs)
+            print("outputs : ", outputs)
+
             self.model_optimizer.zero_grad()
             losses["loss"].backward()
             self.model_optimizer.step()
@@ -222,6 +229,9 @@ class Trainer:
 
                 if "depth_gt" in inputs:
                     self.compute_depth_losses(inputs, outputs, losses)
+
+                ## wandb log write
+                wandb.log({"train_loss": losses})
 
                 self.log("train", inputs, outputs, losses)
                 self.val()
@@ -518,10 +528,10 @@ class Trainer:
         mask = depth_gt > 0
 
         # garg/eigen crop
-        crop_mask = torch.zeros_like(mask)
+        # crop_mask = torch.zeros_like(mask)
         ## TODO -> 현재 kitti 형태의 crop 부분인듯?
-        crop_mask[:, :, 153:371, 44:1197] = 1
-        mask = mask * crop_mask
+        # crop_mask[:, :, 153:371, 44:1197] = 1 ## 하늘 부분을 crop하는 이미지 
+        # mask = mask * crop_mask
 
         depth_gt = depth_gt[mask]
         depth_pred = depth_pred[mask]
