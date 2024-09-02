@@ -210,6 +210,7 @@ class Trainer:
 
             outputs, losses = self.process_batch(inputs)
 
+            ## TODO - > gt, pred 출력 부분
             ## 둘이 범위가 맞는지를 한 번 확인
             print("inputs : ", inputs)
             print("outputs : ", outputs)
@@ -245,6 +246,7 @@ class Trainer:
         for key, ipt in inputs.items():
             inputs[key] = ipt.to(self.device)
 
+        ## default == separate_resnet
         if self.opt.pose_model_type == "shared":
             # If we are using a shared encoder for both depth and pose (as advocated
             # in monodepthv1), then all images are fed separately through the depth encoder.
@@ -259,8 +261,9 @@ class Trainer:
             outputs = self.models["depth"](features[0])
         else:
             # Otherwise, we only feed the image with frame_id 0 through the depth encoder
-            features = self.models["encoder"](inputs["color_aug", 0, 0])
-            outputs = self.models["depth"](features)
+            ## TODO -> where outputs(predicted depth) generated
+            features = self.models["encoder"](inputs["color_aug", 0, 0]) ## list
+            outputs = self.models["depth"](features) ## dictionary
 
         if self.opt.predictive_mask:
             outputs["predictive_mask"] = self.models["predictive_mask"](features)
