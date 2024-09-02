@@ -51,7 +51,6 @@ def export_gt_depths_kitti():
         folder, frame_id = line.split() ## folder == 날짜 / frame_id == 이미지 번호
         frame_id = int(frame_id)
 
-        ## TODO -> 현재 이 두 split도 아닌 polar_Ref split인데 이러면 필요 없는건가?
         if opt.split == "eigen":
             calib_dir = os.path.join(opt.data_path, "calibration")
             velo_filename = os.path.join(opt.data_path, folder,
