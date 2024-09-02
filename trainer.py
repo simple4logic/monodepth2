@@ -212,8 +212,22 @@ class Trainer:
 
             ## TODO - > gt, pred 출력 부분
             ## 둘이 범위가 맞는지를 한 번 확인
-            print("inputs : ", inputs)
-            print("outputs : ", outputs)
+            # print("shape of inputs : ", inputs["depth_gt"][:,:,:,:])
+            print("input one item: ", (inputs["depth_gt"][0,0,0,0]).dtype)
+            # print("input max : ", torch.max(inputs["depth_gt"][:,:,:,:]))
+            # print("input min : ", torch.min(inputs["depth_gt"][:,:,:,:]))
+            # print("output max : ", torch.max(outputs[("depth", 0, 0)][0,:,:,:]))
+            # print("output min : ", torch.min(outputs[("depth", 0, 0)][0,:,:,:]))
+
+
+            ## outputs 범위가 0~1
+            ## inputs  범위가 0 ~ 40
+            ## ex [0.2293, 0.2293, 0.2294,  ..., 0.2455, 0.2443, 0.2454],
+            # print("shape of outputs : ",(outputs[("depth", 0, 0)][0,:,:,:]))
+            '''
+            shape of inputs :  torch.Size([12, 1, 1023, 1223])
+            shape of outputs :  torch.Size([12, 1, 192, 640])
+            '''
 
             self.model_optimizer.zero_grad()
             losses["loss"].backward()
