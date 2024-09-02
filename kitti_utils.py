@@ -2,6 +2,7 @@ from __future__ import absolute_import, division, print_function
 
 import os
 import numpy as np
+import torch
 from collections import Counter
 
 ## None으로 리턴된 "inputs" 변수를 제외시키기 위한 함수
