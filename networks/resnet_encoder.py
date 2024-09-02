@@ -86,6 +86,7 @@ class ResnetEncoder(nn.Module):
         if num_layers > 34:
             self.num_ch_enc[1:] *= 4
 
+    ## class(arguments)이면 이 함수로 들어가서 실행됨
     def forward(self, input_image):
         self.features = []
         x = (input_image - 0.45) / 0.225
