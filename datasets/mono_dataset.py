@@ -204,6 +204,7 @@ class MonoDataset(data.Dataset):
         ## 이 부분에서, kitti_dataeset에서 정의된 get_depth를 이용해 gt를 넣어준다
         ## kitti_dataset에서 가져올 수 있도록 미리 npz를 bin 파일로 변환해둘 것
         if self.load_depth:
+            ## TODO -> get_depth 부분, kitti_dataset.py의 polardataset의 get_depth를 호출
             depth_gt = self.get_depth(folder, frame_index)
             inputs["depth_gt"] = np.expand_dims(depth_gt, 0)
             inputs["depth_gt"] = torch.from_numpy(inputs["depth_gt"].astype(np.float32))

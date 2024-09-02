@@ -152,6 +152,7 @@ class polarDataset(KITTIDataset):
             self.data_path, "p_channel", folder, f_str)
         return image_path
 
+    ## TODO -> gt-depth를 만들때 호출되는 함수
     def get_depth(self, folder, frame_index):
         ## data_path = os.path.join("data","UROP","UROP_polardepth","polarimetric_imaging_dataset",)
         calib_path = os.path.join(self.data_path, "calibration")
