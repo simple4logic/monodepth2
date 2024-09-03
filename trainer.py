@@ -213,7 +213,7 @@ class Trainer:
             ## TODO - > gt, pred 출력 부분
             ## 둘이 범위가 맞는지를 한 번 확인
             # print("shape of inputs : ", inputs["depth_gt"][:,:,:,:])
-            print("input one item: ", (inputs["depth_gt"][0,0,0,0]).dtype)
+            # print("input one item: ", (inputs["depth_gt"][0,0,0,0]).dtype)
             # print("input max : ", torch.max(inputs["depth_gt"][:,:,:,:]))
             # print("input min : ", torch.min(inputs["depth_gt"][:,:,:,:]))
             # print("output max : ", torch.max(outputs[("depth", 0, 0)][0,:,:,:]))
@@ -538,7 +538,7 @@ class Trainer:
         """
         depth_pred = outputs[("depth", 0, 0)]
         depth_pred = torch.clamp(F.interpolate(
-            depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80)
+            depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80) # size was (375, 1242)
         depth_pred = depth_pred.detach()
 
         depth_gt = inputs["depth_gt"]
