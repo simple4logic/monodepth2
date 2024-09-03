@@ -25,11 +25,17 @@ class KITTIDataset(MonoDataset):
         # To normalize you need to scale the first row by 1 / image_width and the second row
         # by 1 / image_height. Monodepth2 assumes a principal point to be exactly centered.
         # If your principal point is far from the center you might need to disable the horizontal
-        # flip augmentation.
-        self.K = np.array([[0.58, 0, 0.5, 0],
-                           [0, 1.92, 0.5, 0],
+        # flip augmentation. 
+        # width = 1216, height = 1024
+        self.K = np.array([[0.94025049342, 0, 0.49906634292, 0],
+                           [0, 1.12856769531, 0.50701688867, 0],
                            [0, 0, 1, 0],
                            [0, 0, 0, 1]], dtype=np.float32)
+        
+        # self.K = np.array([[0.58, 0, 0.5, 0],
+        #                    [0, 1.92, 0.5, 0],
+        #                    [0, 0, 1, 0],
+        #                    [0, 0, 0, 1]], dtype=np.float32)
 
         # self.full_res_shape = (1242, 375)
         self.full_res_shape = (1223, 1023)
