@@ -579,33 +579,41 @@ class Trainer:
         writer = self.writers[mode]
         for l, v in losses.items():
             writer.add_scalar("{}".format(l), v, self.step)
+            wandb.log({l : v})
 
         for j in range(min(4, self.opt.batch_size)):  # write a maxmimum of four images
             for s in self.opt.scales:
                 for frame_id in self.opt.frame_ids:
-                    writer.add_image(
-                        "color_{}_{}/{}".format(frame_id, s, j),
-                        inputs[("color", frame_id, s)][j].data, self.step)
-                    if s == 0 and frame_id != 0:
-                        writer.add_image(
-                            "color_pred_{}_{}/{}".format(frame_id, s, j),
-                            outputs[("color", frame_id, s)][j].data, self.step)
+                    image_name = "color_{}_{}/{}".format(frame_id, s, j)
+                    image_data =  inputs[("color", frame_id, s)][j].data
 
-                writer.add_image(
-                    "disp_{}/{}".format(s, j),
-                    normalize_image(outputs[("disp", s)][j]), self.step)
+                    writer.add_image(image_name, image_data, self.step)
+                    wandb.log({image_name: wandb.Image(image_data)})
+
+                    if s == 0 and frame_id != 0:
+                        pred_image_name = "color_pred_{}_{}/{}".format(frame_id, s, j)
+                        pred_image_data = outputs[("color", frame_id, s)][j].data
+                        writer.add_image(pred_image_name, pred_image_data, self.step)
+                        wandb.log({pred_image_name: wandb.Image(pred_image_data)})
+
+                disp_name = "disp_{}/{}".format(s, j)
+                disp_data = normalize_image(outputs[("disp", s)][j])
+                writer.add_image(disp_name, disp_data, self.step)
+                wandb.log({disp_name: wandb.Image(disp_data)})
 
                 if self.opt.predictive_mask:
                     for f_idx, frame_id in enumerate(self.opt.frame_ids[1:]):
-                        writer.add_image(
-                            "predictive_mask_{}_{}/{}".format(frame_id, s, j),
-                            outputs["predictive_mask"][("disp", s)][j, f_idx][None, ...],
-                            self.step)
+                        pred_mask_name = "predictive_mask_{}_{}/{}".format(frame_id, s, j)
+                        pred_mask_data =  outputs["predictive_mask"][("disp", s)][j, f_idx][None, ...]
+                        writer.add_image(pred_mask_name, pred_mask_data, self.step)
+                        wandb.log({pred_mask_name: wandb.Image(pred_mask_data)})
 
                 elif not self.opt.disable_automasking:
-                    writer.add_image(
-                        "automask_{}/{}".format(s, j),
-                        outputs["identity_selection/{}".format(s)][j][None, ...], self.step)
+                    auto_mask_name = "automask_{}/{}".format(s, j)
+                    auto_mask_data = outputs["identity_selection/{}".format(s)][j][None, ...]
+                    writer.add_image(auto_mask_name, auto_mask_data, self.step)
+                    wandb.log({auto_mask_name: wandb.Image(auto_mask_data)})
+
 
     def save_opts(self):
         """Save options to disk so we know what we ran this experiment with
