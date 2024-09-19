@@ -30,9 +30,10 @@ def make_Pchannel(self, single_filename, data_path):
     dolpIMG = cv2.imread(dolp_name, cv2.IMREAD_GRAYSCALE)
 
     ## Aolp를 degree domain으로 변경
-    aolpIMG = np.interp(aolpIMG, (0, 255), (0, 180))
+    # aolpIMG = np.interp(aolpIMG, (0, 255), (0, 180))
     ## Dolp를 0~1로 normalize
-    dolpIMG = dolpIMG / 255.0
+    aolpIMG = aolpIMG / 255.0 * np.pi   # 0 ~ pi
+    dolpIMG = dolpIMG / 255.0           # 0 ~ 1
 
     ## 셋다 범위 -1 ~ 1
     P0 = np.sin(2 * aolpIMG)
@@ -51,15 +52,16 @@ def make_Pchannel(self, single_filename, data_path):
 
 
 file_dir = os.path.dirname(__file__) ## 이 python 파일이 놓여있는 directory 위
-# dataset_path = os.path.join(file_dir, "polarimetric_imaging_dataset") ## linux
-dataset_path = os.path.join("C:\\Users\\okht1\\Downloads", "polarimetric_imaging_dataset") ## this window os
+dataset_path = os.path.join(file_dir, "polarimetric_imaging_dataset") ## linux
+# dataset_path = os.path.join("C:\\Users\\okht1\\Downloads", "polarimetric_imaging_dataset") ## this window os
 
 fpath = os.path.join(dataset_path, "data_splits", "monodepth", "{}_files.txt")
 usage = ["train", "test", "val"]
 # print(dataset_path)
 
 for name in usage:
-    filenames = readlines(fpath.format(name)) #["20220621_142942 1365"]
+    filenames = ["20220621_142942 1365"]
+    # filenames = readlines(fpath.format(name)) #["20220621_142942 1365"]
     total_length = len(filenames)
     for i in range(total_length):
         # print("target file name : ", train_filenames[i])
