@@ -165,7 +165,7 @@ class Trainer:
             self.project_3d[scale].to(self.device)
 
         self.depth_metric_names = [
-            "de/abs_rel", "de/sq_rel", "de/rms", "de/log_rms", "de/gt_pred,""da/a1", "da/a2", "da/a3"]
+            "de/abs_rel", "de/sq_rel", "de/rms", "de/log_rms", "da/a1", "da/a2", "da/a3"]
 
         print("Using split:\n  ", self.opt.split)
         print("There are {:d} training items and {:d} validation items\n".format(
