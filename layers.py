@@ -263,7 +263,8 @@ def compute_depth_errors(gt, pred):
     rmse_log = torch.sqrt(rmse_log.mean())
 
     abs_rel = torch.mean(torch.abs(gt - pred) / gt)
+    gt_pred = gt - pred
 
     sq_rel = torch.mean((gt - pred) ** 2 / gt)
 
-    return abs_rel, sq_rel, rmse, rmse_log, a1, a2, a3
+    return abs_rel, sq_rel, rmse, rmse_log, gt_pred, a1, a2, a3

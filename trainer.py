@@ -165,7 +165,7 @@ class Trainer:
             self.project_3d[scale].to(self.device)
 
         self.depth_metric_names = [
-            "de/abs_rel", "de/sq_rel", "de/rms", "de/log_rms", "da/a1", "da/a2", "da/a3"]
+            "de/abs_rel", "de/sq_rel", "de/rms", "de/log_rms", "de/gt_pred,""da/a1", "da/a2", "da/a3"]
 
         print("Using split:\n  ", self.opt.split)
         print("There are {:d} training items and {:d} validation items\n".format(
@@ -390,10 +390,10 @@ class Trainer:
 
             for i, frame_id in enumerate(self.opt.frame_ids[1:]):
 
-                if frame_id == "s":
-                    T = inputs["stereo_T"]
-                else:
-                    T = outputs[("cam_T_cam", 0, frame_id)]
+                # if frame_id == "s":
+                #     T = inputs["stereo_T"]
+                # else:
+                T = outputs[("cam_T_cam", 0, frame_id)]
 
                 # from the authors of https://arxiv.org/abs/1712.00175
                 if self.opt.pose_model_type == "posecnn":
