@@ -72,18 +72,18 @@ class MonoDataset(data.Dataset):
 
         # We need to specify augmentations differently in newer versions of torchvision.
         # We first try the newer tuple version; if this fails we fall back to scalars
-        try:
-            self.brightness = (0.8, 1.2)
-            self.contrast = (0.8, 1.2)
-            self.saturation = (0.8, 1.2)
-            self.hue = (-0.1, 0.1)
-            transforms.ColorJitter.get_params(
-                self.brightness, self.contrast, self.saturation, self.hue)
-        except TypeError:
-            self.brightness = 0.2
-            self.contrast = 0.2
-            self.saturation = 0.2
-            self.hue = 0.1
+        # try:
+        #     self.brightness = (0.8, 1.2)
+        #     self.contrast = (0.8, 1.2)
+        #     self.saturation = (0.8, 1.2)
+        #     self.hue = (-0.1, 0.1)
+        #     transforms.ColorJitter.get_params(
+        #         self.brightness, self.contrast, self.saturation, self.hue)
+        # except TypeError:
+        #     self.brightness = 0.2
+        #     self.contrast = 0.2
+        #     self.saturation = 0.2
+        #     self.hue = 0.1
 
         self.resize = {}
         for i in range(self.num_scales):
