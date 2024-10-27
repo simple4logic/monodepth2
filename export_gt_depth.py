@@ -19,7 +19,7 @@ from kitti_utils import generate_depth_map
 '''
 원래는 쓸 kitti-dataset의 .bin 파일들을 모두 모아서,
 .npz 형태로 저장해주는 파일.
-이렇게 gt를 뽑는 이유는 gt를 뽑아서 trained 모델에 대해 test할 때 쓰기 위해서이다.
+이렇게 gt를 뽑는 이유는 gt를 뽑아서 trained 모델에 대해 evaluation 할 때 쓰기 위해서이다.
 
 polar에서는 각각에 대한 npz 파일을 썼지만, 여기서는 그 npz들을 모아 하나의 총괄적인 큰 npz 하나를 조립한 것으로 보인다
 '''
