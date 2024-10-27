@@ -154,8 +154,8 @@ class polarDataset(KITTIDataset):
 
     def get_image_path(self, folder, frame_index):
         f_str = "{:07d}{}".format(frame_index, self.img_ext)
-        image_path = os.path.join(self.data_path, "p_channel", folder, f_str)
-        # image_path = os.path.join(self.data_path, folder, "RGB_undistorted",f_str)
+        image_path = os.path.join(
+            self.data_path, "p_channel", folder, f_str)
         return image_path
 
     ## TODO -> gt-depth를 만들때 호출되는 함수
