@@ -89,9 +89,9 @@ def evaluate(opt):
                                            encoder_dict['height'], encoder_dict['width'],
                                            [0], 4, is_train=False)
         ## 16 == batch size
-        dataloader = DataLoader(dataset, 16, shuffle=False, num_workers=opt.num_workers,
+        dataloader = DataLoader(dataset, opt.batch_size, shuffle=False, num_workers=opt.num_workers,
                                 pin_memory=True, drop_last=False, 
-                                collate_fn=lambda x: custom_collate_fn(x, dataset, 16))
+                                collate_fn=lambda x: custom_collate_fn(x, dataset, opt.batch_size))
 
         encoder = networks.ResnetEncoder(opt.num_layers, False)
         depth_decoder = networks.DepthDecoder(encoder.num_ch_enc)
@@ -111,7 +111,9 @@ def evaluate(opt):
             encoder_dict['width'], encoder_dict['height']))
 
         with torch.no_grad():
+            i = 0
             for data in dataloader:
+                print("now working on ", i , "-th data.")
                 input_color = data[("color", 0, 0)].cuda()
 
                 if opt.post_process:
@@ -128,6 +130,7 @@ def evaluate(opt):
                     pred_disp = batch_post_process_disparity(pred_disp[:N], pred_disp[N:, :, ::-1])
 
                 pred_disps.append(pred_disp)
+                i+=1
 
         pred_disps = np.concatenate(pred_disps)
 
@@ -194,10 +197,11 @@ def evaluate(opt):
         pred_disp = cv2.resize(pred_disp, (gt_width, gt_height))
         pred_depth = 1 / pred_disp
 
-        if opt.eval_split == "eigen":
+        if opt.eval_split == "polar_ref":
             mask = np.logical_and(gt_depth > MIN_DEPTH, gt_depth < MAX_DEPTH)
 
-            crop = np.array([0.40810811 * gt_height, 0.99189189 * gt_height,
+            ## TODO MASK here?
+            crop = np.array([0.40810811 * gt_height,  0.7138 * gt_height, #원래 gt_height 아래 경계 0.99189189
                              0.03594771 * gt_width,  0.96405229 * gt_width]).astype(np.int32)
             crop_mask = np.zeros(mask.shape)
             crop_mask[crop[0]:crop[1], crop[2]:crop[3]] = 1
@@ -231,7 +235,6 @@ def evaluate(opt):
     print(("&{: 8.3f}  " * 7).format(*mean_errors.tolist()) + "\\\\")
     print("\n-> Done!")
 
-## 즉 이 파일을 train.py와는 별개로 "따로" 실행해서 gt를 npz 형태로 추출하는 python code이다
 if __name__ == "__main__":
     options = MonodepthOptions()
     evaluate(options.parse())
