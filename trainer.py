@@ -199,7 +199,7 @@ class Trainer:
     def run_epoch(self):
         """Run a single epoch of training and validation
         """
-        self.model_lr_scheduler.step()
+        # self.model_lr_scheduler.step()
 
         print("Training")
         self.set_train()
@@ -252,6 +252,9 @@ class Trainer:
                 self.val()
 
             self.step += 1
+            
+        self.model_lr_scheduler.step()
+
 
     def process_batch(self, inputs):
         """Pass a minibatch through the network and generate images and losses
@@ -543,12 +546,15 @@ class Trainer:
 
         depth_gt = inputs["depth_gt"]
         mask = depth_gt > 0
-
+        
+        # (375, 1242) // org size
+        # (1023, 1223) // new size
         # garg/eigen crop
-        # crop_mask = torch.zeros_like(mask)
-        ## TODO -> 현재 kitti 형태의 crop 부분인듯?
-        # crop_mask[:, :, 153:371, 44:1197] = 1 ## 하늘 부분을 crop하는 이미지 
-        # mask = mask * crop_mask
+        crop_mask = torch.zeros_like(mask)
+        ## TODO -> 현재 kitti 형태의 crop 부분 -> 하늘 자르고 좌우 살짝씩 자름
+        # crop_mask[:, :, 153:371, 44:1197] = 1 ## 원본 crop
+        crop_mask[:, :, 330:916, 40:1183] = 1 ## 하늘 부분을 crop하는 이미지 
+        mask = mask * crop_mask
 
         depth_gt = depth_gt[mask]
         depth_pred = depth_pred[mask]
