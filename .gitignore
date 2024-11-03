@@ -9,3 +9,5 @@ WindowsPowerShell/profile.ps1
 log/
 wandb/
 assets/
+trainer_org.py
+datasets/kitti_dataset_org.py
