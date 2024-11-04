@@ -541,7 +541,7 @@ class Trainer:
         """
         depth_pred = outputs[("depth", 0, 0)]
         depth_pred = torch.clamp(F.interpolate(
-            depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80) # size was (375, 1242)
+            depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 3, 40)#1e-3, 80) # size was (375, 1242)
         depth_pred = depth_pred.detach()
 
         depth_gt = inputs["depth_gt"]
@@ -560,7 +560,7 @@ class Trainer:
         depth_pred = depth_pred[mask]
         depth_pred *= torch.median(depth_gt) / torch.median(depth_pred)
 
-        depth_pred = torch.clamp(depth_pred, min=1e-3, max=80)
+        depth_pred = torch.clamp(depth_pred, min=3, max=40) # was 1e-3, 80
 
         depth_errors = compute_depth_errors(depth_gt, depth_pred)
 
