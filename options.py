@@ -52,7 +52,7 @@ class MonodepthOptions:
         self.parser.add_argument("--height", ## resize 목표의 height!
                                  type=int,
                                  help="input image height",
-                                 default=192)
+                                 default=512)
         self.parser.add_argument("--width", ## resize 목표의 width!!
                                  type=int,
                                  help="input image width",
@@ -90,7 +90,7 @@ class MonodepthOptions:
         self.parser.add_argument("--batch_size",
                                  type=int,
                                  help="batch size",
-                                 default=12)
+                                 default=8)
         self.parser.add_argument("--learning_rate",
                                  type=float,
                                  help="learning rate",
@@ -98,7 +98,7 @@ class MonodepthOptions:
         self.parser.add_argument("--num_epochs",
                                  type=int,
                                  help="number of epochs",
-                                 default=20)
+                                 default=80)
         self.parser.add_argument("--scheduler_step_size",
                                  type=int,
                                  help="step size of the scheduler",
@@ -143,7 +143,7 @@ class MonodepthOptions:
         self.parser.add_argument("--num_workers",
                                  type=int,
                                  help="number of dataloader workers",
-                                 default=12)
+                                 default=4)
 
         # LOADING options
         self.parser.add_argument("--load_weights_folder",
