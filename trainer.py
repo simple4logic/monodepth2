@@ -216,8 +216,8 @@ class Trainer:
             # print("input one item: ", (inputs["depth_gt"][0,0,0,0]).dtype)
             # print("input max : ", torch.max(inputs["depth_gt"][:,:,:,:]))
             # print("input min : ", torch.min(inputs["depth_gt"][:,:,:,:]))
-            # print("output max : ", torch.max(outputs[("depth", 0, 0)][0,:,:,:]))
-            # print("output min : ", torch.min(outputs[("depth", 0, 0)][0,:,:,:]))
+            # print("output max : ", torch.max(outputs[("depth", 0, 0)][:,:,:,:]))
+            # print("output min : ", torch.min(outputs[("depth", 0, 0)][:,:,:,:]))
 
 
             ## outputs 범위가 0~1
@@ -540,8 +540,11 @@ class Trainer:
         so is only used to give an indication of validation performance
         """
         depth_pred = outputs[("depth", 0, 0)]
-        depth_pred = torch.clamp(F.interpolate(
-            depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 3, 40)#1e-3, 80) # size was (375, 1242)
+        # as this is the INNER range of the depth_pred, applying range(3, 40) can cut off the major info here
+        depth_pred = torch.clamp(F.interpolate(depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80) # size was (375, 1242)
+        # print("before normalization")
+        # print(torch.max(depth_pred))
+        # print(torch.min(depth_pred))
         depth_pred = depth_pred.detach()
 
         depth_gt = inputs["depth_gt"]
@@ -559,6 +562,9 @@ class Trainer:
         depth_gt = depth_gt[mask]
         depth_pred = depth_pred[mask]
         depth_pred *= torch.median(depth_gt) / torch.median(depth_pred)
+        # print("after normalization")
+        # print(torch.max(depth_pred))
+        # print(torch.min(depth_pred))
 
         depth_pred = torch.clamp(depth_pred, min=3, max=40) # was 1e-3, 80
 
