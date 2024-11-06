@@ -143,13 +143,14 @@ class MonodepthOptions:
         self.parser.add_argument("--num_workers",
                                  type=int,
                                  help="number of dataloader workers",
-                                 default=4)
+                                 default=8)
 
         # LOADING options
         self.parser.add_argument("--load_weights_folder",
                                  type=str,
                                  help="name of model to load",
-                                 default=os.path.join(file_dir, "log", "mdp", "models", "weights_19"))
+                                 # default=os.path.join(file_dir, "log", "mdp", "models", "weights_19"))
+                                 default=None)
         self.parser.add_argument("--models_to_load",
                                  nargs="+",
                                  type=str,
