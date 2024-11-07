@@ -539,9 +539,10 @@ class Trainer:
         This isn't particularly accurate as it averages over the entire batch,
         so is only used to give an indication of validation performance
         """
+        ### depth_pred range -> 2 ~ 45 (gt : 3 ~ 40)
         depth_pred = outputs[("depth", 0, 0)]
         # as this is the INNER range of the depth_pred, applying range(3, 40) can cut off the major info here
-        depth_pred = torch.clamp(F.interpolate(depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80) # size was (375, 1242)
+        depth_pred = torch.clamp(F.interpolate(depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 3, 40)#1e-3, 80) # size was (375, 1242)
         # print("before normalization")
         # print(torch.max(depth_pred))
         # print(torch.min(depth_pred))
