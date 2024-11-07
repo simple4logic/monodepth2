@@ -100,8 +100,8 @@ def generate_depth_map(calib_dir, velo_filename, cam=2, vel_depth=False):
     depth_value = depth_value.T # n X 1
 
     ## min, max clipping
-    min_distance = 3
-    max_distance = 40
+    min_distance = 3    #from readme @ polar
+    max_distance = 40   #from readme @ polar
     depth_value = np.clip(depth_value, min_distance, max_distance) # min, max clipping
 
     ## 여기서는 normalize 안했는데 이걸 해야할지 말아야할지 보류!! Q
