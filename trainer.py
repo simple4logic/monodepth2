@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
 import json
+import random
 
 from utils import *
 from kitti_utils import *
@@ -28,7 +29,20 @@ from IPython import embed
 
 ## before run this script, run "wandb init" in terminal and create project named "polardepth"
 wandb.init(project = "polardepth")
+wandb.run.log_code("./trainer.py")
 
+seed = 1
+#------------------ SEED setting ----------------------#
+# python seed 
+random.seed(seed)
+
+# numpy seed
+np.random.seed(seed)
+
+# pytorch seed
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+#------------------------------------------------------#
 class Trainer:
     def __init__(self, options):
         self.opt = options
@@ -542,7 +556,7 @@ class Trainer:
         ### depth_pred range -> 2 ~ 45 (gt : 3 ~ 40)
         depth_pred = outputs[("depth", 0, 0)]
         # as this is the INNER range of the depth_pred, applying range(3, 40) can cut off the major info here
-        depth_pred = torch.clamp(F.interpolate(depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 3, 40)#1e-3, 80) # size was (375, 1242)
+        depth_pred = torch.clamp(F.interpolate(depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80) # size was (375, 1242)
         # print("before normalization")
         # print(torch.max(depth_pred))
         # print(torch.min(depth_pred))
@@ -558,6 +572,7 @@ class Trainer:
         ## TODO -> 현재 kitti 형태의 crop 부분 -> 하늘 자르고 좌우 살짝씩 자름
         # crop_mask[:, :, 153:371, 44:1197] = 1 ## 원본 crop
         crop_mask[:, :, 330:916, 40:1183] = 1 ## 하늘 부분을 crop하는 이미지 
+        # crop_mask[:, :, 330:650, 40:1183] = 1 ## dense 한 부분만 crop하는 이미지
         mask = mask * crop_mask
 
         depth_gt = depth_gt[mask]
@@ -567,7 +582,7 @@ class Trainer:
         # print(torch.max(depth_pred))
         # print(torch.min(depth_pred))
 
-        depth_pred = torch.clamp(depth_pred, min=3, max=40) # was 1e-3, 80
+        depth_pred = torch.clamp(depth_pred, min=1e-3, max=80) # was 1e-3, 80
 
         depth_errors = compute_depth_errors(depth_gt, depth_pred)
 
