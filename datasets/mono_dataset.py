@@ -70,6 +70,7 @@ class MonoDataset(data.Dataset):
         self.loader = pil_loader
         self.to_tensor = transforms.ToTensor()
 
+        ################## MEANINGLESS as do_color_aug is not exist anymore ###################
         # We need to specify augmentations differently in newer versions of torchvision.
         # We first try the newer tuple version; if this fails we fall back to scalars
         # try:
