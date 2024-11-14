@@ -31,7 +31,7 @@ from IPython import embed
 wandb.init(project = "polardepth")
 wandb.run.log_code("./trainer.py")
 
-seed = 1
+seed = 2024
 #------------------ SEED setting ----------------------#
 # python seed 
 random.seed(seed)
@@ -452,7 +452,8 @@ class Trainer:
             reprojection_loss = l1_loss
         else:
             ssim_loss = self.ssim(pred, target).mean(1, True)
-            reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+            # reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+            reprojection_loss = 0.15 * ssim_loss + 0.85 * l1_loss
 
         return reprojection_loss
 
