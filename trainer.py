@@ -222,6 +222,7 @@ class Trainer:
 
             before_op_time = time.time()
 
+            ## train & compute disparity loss only
             outputs, losses = self.process_batch(inputs)
 
             ## TODO - > gt, pred 출력 부분
@@ -401,7 +402,7 @@ class Trainer:
                     disp, [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
                 source_scale = 0
 
-            _, depth = disp_to_depth(disp, self.opt.min_depth, self.opt.max_depth)
+            _, depth = disp_to_depth(disp, self.opt.min_depth, self.opt.max_depth) 
 
             outputs[("depth", 0, scale)] = depth
 
@@ -452,8 +453,8 @@ class Trainer:
             reprojection_loss = l1_loss
         else:
             ssim_loss = self.ssim(pred, target).mean(1, True)
-            # reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
-            reprojection_loss = 0.15 * ssim_loss + 0.85 * l1_loss
+            reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+            # reprojection_loss = 0.15 * ssim_loss + 0.85 * l1_loss
 
         return reprojection_loss
 
@@ -477,7 +478,7 @@ class Trainer:
             target = inputs[("color", 0, source_scale)]
 
             for frame_id in self.opt.frame_ids[1:]:
-                pred = outputs[("color", frame_id, scale)]
+                pred = outputs[("color", frame_id, scale)] ## reprojected color image
                 reprojection_losses.append(self.compute_reprojection_loss(pred, target))
 
             reprojection_losses = torch.cat(reprojection_losses, 1)
@@ -538,9 +539,9 @@ class Trainer:
 
             mean_disp = disp.mean(2, True).mean(3, True)
             norm_disp = disp / (mean_disp + 1e-7)
-            smooth_loss = get_smooth_loss(norm_disp, color)
+            # smooth_loss = get_smooth_loss(norm_disp, color)
 
-            loss += self.opt.disparity_smoothness * smooth_loss / (2 ** scale)
+            # loss += self.opt.disparity_smoothness * smooth_loss / (2 ** scale)
             total_loss += loss
             losses["loss/{}".format(scale)] = loss
 
@@ -583,7 +584,7 @@ class Trainer:
         # print(torch.max(depth_pred))
         # print(torch.min(depth_pred))
 
-        depth_pred = torch.clamp(depth_pred, min=1e-3, max=80) # was 1e-3, 80
+        depth_pred = torch.clamp(depth_pred, min=3, max=40) # was 1e-3, 80
 
         depth_errors = compute_depth_errors(depth_gt, depth_pred)
 
