@@ -5,9 +5,8 @@ __pycache__
 *.npz
 kitti_data
 models
-WindowsPowerShell/profile.ps1
+# WindowsPowerShell/profile.ps1
 log/
 wandb/
 assets/
-trainer_org.py
-datasets/kitti_dataset_org.py
+polarimetric_imaging_dataset/

@@ -17,6 +17,7 @@ from torch.utils.data import DataLoader
 from tensorboardX import SummaryWriter
 
 import json
+import random
 
 from utils import *
 from kitti_utils import *
@@ -28,7 +29,20 @@ from IPython import embed
 
 ## before run this script, run "wandb init" in terminal and create project named "polardepth"
 wandb.init(project = "polardepth")
+wandb.run.log_code("./trainer.py")
 
+seed = 2024
+#------------------ SEED setting ----------------------#
+# python seed 
+random.seed(seed)
+
+# numpy seed
+np.random.seed(seed)
+
+# pytorch seed
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+#------------------------------------------------------#
 class Trainer:
     def __init__(self, options):
         self.opt = options
@@ -208,6 +222,7 @@ class Trainer:
 
             before_op_time = time.time()
 
+            ## train & compute disparity loss only
             outputs, losses = self.process_batch(inputs)
 
             ## TODO - > gt, pred 출력 부분
@@ -387,7 +402,7 @@ class Trainer:
                     disp, [self.opt.height, self.opt.width], mode="bilinear", align_corners=False)
                 source_scale = 0
 
-            _, depth = disp_to_depth(disp, self.opt.min_depth, self.opt.max_depth)
+            _, depth = disp_to_depth(disp, self.opt.min_depth, self.opt.max_depth) 
 
             outputs[("depth", 0, scale)] = depth
 
@@ -439,6 +454,7 @@ class Trainer:
         else:
             ssim_loss = self.ssim(pred, target).mean(1, True)
             reprojection_loss = 0.85 * ssim_loss + 0.15 * l1_loss
+            # reprojection_loss = 0.15 * ssim_loss + 0.85 * l1_loss
 
         return reprojection_loss
 
@@ -462,7 +478,7 @@ class Trainer:
             target = inputs[("color", 0, source_scale)]
 
             for frame_id in self.opt.frame_ids[1:]:
-                pred = outputs[("color", frame_id, scale)]
+                pred = outputs[("color", frame_id, scale)] ## reprojected color image
                 reprojection_losses.append(self.compute_reprojection_loss(pred, target))
 
             reprojection_losses = torch.cat(reprojection_losses, 1)
@@ -523,9 +539,9 @@ class Trainer:
 
             mean_disp = disp.mean(2, True).mean(3, True)
             norm_disp = disp / (mean_disp + 1e-7)
-            smooth_loss = get_smooth_loss(norm_disp, color)
+            # smooth_loss = get_smooth_loss(norm_disp, color)
 
-            loss += self.opt.disparity_smoothness * smooth_loss / (2 ** scale)
+            # loss += self.opt.disparity_smoothness * smooth_loss / (2 ** scale)
             total_loss += loss
             losses["loss/{}".format(scale)] = loss
 
@@ -539,6 +555,7 @@ class Trainer:
         This isn't particularly accurate as it averages over the entire batch,
         so is only used to give an indication of validation performance
         """
+        ### depth_pred range -> 2 ~ 45 (gt : 3 ~ 40)
         depth_pred = outputs[("depth", 0, 0)]
         # as this is the INNER range of the depth_pred, applying range(3, 40) can cut off the major info here
         depth_pred = torch.clamp(F.interpolate(depth_pred, [1023, 1223], mode="bilinear", align_corners=False), 1e-3, 80) # size was (375, 1242)
@@ -557,6 +574,7 @@ class Trainer:
         ## TODO -> 현재 kitti 형태의 crop 부분 -> 하늘 자르고 좌우 살짝씩 자름
         # crop_mask[:, :, 153:371, 44:1197] = 1 ## 원본 crop
         crop_mask[:, :, 330:916, 40:1183] = 1 ## 하늘 부분을 crop하는 이미지 
+        # crop_mask[:, :, 330:650, 40:1183] = 1 ## dense 한 부분만 crop하는 이미지
         mask = mask * crop_mask
 
         depth_gt = depth_gt[mask]
